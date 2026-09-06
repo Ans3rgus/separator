@@ -1,3 +1,4 @@
+# src/valve.py
 import math
 from enum import Enum
 from typing import Optional
@@ -82,10 +83,7 @@ class ValveModel:
         """
         # Валидация входных параметров
         if opening < 0 or opening > 1:
-            raise ValueError("Степень открытия должна быть в диапазоне [0, 1]")
-        
-        # Нормализация открытия в диапазон [0, 1]
-        opening = max(0.0, min(1.0, opening))
+            raise ValueError(f"Степень открытия {opening} должна быть в диапазоне [0, 1]")
         
         # Проверка отсечки
         if math.isclose(opening, 0.0) and self.parameters.cutoff:
@@ -127,12 +125,17 @@ class ValveModel:
             
         Returns:
             Объемный расход, м³/с
+            
+        Raises:
+            ValueError: при некорректных входных параметрах
         """
         # Валидация входных параметров
+        if opening < 0 or opening > 1:
+            raise ValueError(f"Степень открытия {opening} должна быть в диапазоне [0, 1]")
         if density <= 0:
-            raise ValueError("Плотность должна быть положительной")
+            raise ValueError(f"Плотность {density} должна быть положительной")
         if pressure_in < 0 or pressure_out < 0:
-            raise ValueError("Давления не могут быть отрицательными")
+            raise ValueError(f"Давления не могут быть отрицательными. Pin={pressure_in}, Pout={pressure_out}")
         
         # Расчет перепада давления
         dp = pressure_in - pressure_out
@@ -145,7 +148,6 @@ class ValveModel:
         kv = self.calc_kv(opening)
         
         # Формула из ГОСТ Р 55508-2013: Q = (Kv / 35700) * sqrt(dp / density)
-        # Гост не действует, изменено на международный стандарт
         # где Kv в м³/ч, Q в м³/с
         volumetric_flow = (kv / 35700.0) * math.sqrt(dp / density)
         return volumetric_flow
@@ -163,6 +165,9 @@ class ValveModel:
             
         Returns:
             Массовый расход, кг/с
+            
+        Raises:
+            ValueError: при некорректных входных параметрах
         """
         volumetric_flow = self.get_volumetric_flow(opening, density, pressure_in, pressure_out)
         mass_flow = density * volumetric_flow
